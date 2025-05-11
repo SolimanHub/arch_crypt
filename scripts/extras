@@ -1,0 +1,135 @@
+#!/bin/bash
+set -euo pipefail
+cd /
+# ===== Configuraciones iniciales =====
+export LC_ALL=C
+DEFAULT_DESKTOP=1
+MINIMAL_INSTALL="instalacion_minimaxyz"  
+USER_HOME="/home/usuarioxyz"
+USER_NAME="usuarioxyz"
+# ===== Detección automática de drivers gráficos =====
+detect_gpu_drivers() {
+    echo -e "\033[32mDetectando controladores gráficos...\033[0m"
+    local gpu_info=$(lspci | grep -i vga)
+    
+    if grep -qi "intel" <<< "$gpu_info"; then
+        pacman -S --noconfirm --overwrite '*' xf86-video-intel vulkan-intel intel-media-driver
+    elif grep -qi "amd" <<< "$gpu_info"; then
+        pacman -S --noconfirm --overwrite '*' xf86-video-amdgpu vulkan-radeon libva-mesa-driver
+    elif grep -qi "nvidia" <<< "$gpu_info"; then
+        pacman -S --noconfirm --overwrite '*' nvidia nvidia-utils nvidia-settings cuda
+    else
+        echo -e "\033[32mUsando controladores genéricos (modesetting)\033[0m"
+    fi
+}
+
+# ===== Detección automática del procesador =====
+detect_microcode() {
+    local vendor
+    vendor=$(grep -m1 -oP 'vendor_id\s*:\s*\K.*' /proc/cpuinfo | tr -d ' ')
+    
+    if [[ "$vendor" == *"GenuineIntel"* ]]; then
+        echo -e "\033[32mIntel detectado. Instalando intel-ucode\033[0m"
+        microcode="intel-ucode"
+    elif [[ "$vendor" == *"AuthenticAMD"* ]]; then
+        echo -e "\033[32mAMD detectado. Instalando amd-ucode\033[0m"
+        microcode="amd-ucode"
+    else
+        echo -e "\033[32mProcesador no reconocido. No se instalará microcódigo.\033[0m"
+        microcode=""
+    fi
+}
+
+# Llamar a la función de detección
+detect_microcode
+
+# Instalar microcódigo si se detectó
+if [[ -n "$microcode" ]]; then
+    pacman -S --needed --noconfirm --overwrite='*' "$microcode"
+fi
+
+# ===== Instalación mínima =====
+#echo -e "\033[32m<<==============================>>\033[0m"
+#read -rp "¿Desea instalación mínima? [s/N]: " MINIMAL_INSTALL
+#MINIMAL_INSTALL=${MINIMAL_INSTALL,,}
+# ===== Paquetes base esenciales =====
+pacman -S --needed --noconfirm --overwrite '*' \
+    xorg-server xorg-xinit xorg-xrandr \
+    sudo bash-completion jq bat curl wget git \
+    man-db man-pages texinfo pciutils \
+    wpa_supplicant dialog xf86-input-synaptics htop \
+    gvfs gvfs-afc gvfs-mtp 
+# ===== Instalar controladores y kernel =====
+detect_gpu_drivers
+
+# ===== Paquetes opcionales (solo instalación completa) =====
+if [[ "$MINIMAL_INSTALL" != "s" ]]; then
+    pacman -S --noconfirm --overwrite '*' \
+        lightdm lightdm-gtk-greeter \
+        noto-fonts noto-fonts-emoji ttf-firacode-nerd \
+        networkmanager network-manager-applet \
+        pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber \
+        pavucontrol \
+        kitty tree xclip firefox-developer-edition bluez blueberry bluez-utils neovim \
+        alsa-utils 
+    
+    # Thunar con plugins
+    pacman -S --noconfirm --overwrite '*' \
+      thunar thunar-archive-plugin thunar-media-tags-plugin thunar-shares-plugin thunar-volman tumbler ffmpegthumbnailer gvfs gvfs-mtp thunar-vcs-plugin
+    
+    # Herramientas de desarrollo
+    pacman -S --noconfirm --overwrite '*' \
+        docker docker-compose nodejs npm go rust \
+        python python-pip base-devel
+    
+fi
+# Configuración de lightdm
+rm /etc/lightdm/lightdm.conf
+cp lightdm.conf /etc/lightdm/
+echo "background=/usr/share/backgrounds/wall1.png" >> /etc/lightdm/lightdm-gtk-greeter.conf
+# Configuración para el touchpad
+cp 50-synaptics.conf /etc/X11/xorg.conf.d/
+# Instalación de fuentes
+cp fonts/* /usr/share/fonts/
+#rm -r fonts/
+# Cargar paquete de iconos
+cp yay_install "$USER_HOME" && chown -R "$USER_NAME:" "$USER_HOME/yay_install"
+
+# Configurar servicios
+systemctl daemon-reload 
+systemctl enable NetworkManager
+systemctl enable --now bluetooth
+
+[[ "$MINIMAL_INSTALL" != "s" ]] && systemctl enable lightdm
+
+# Configurar PipeWire
+systemctl --user enable pipewire pipewire-pulse wireplumber
+systemctl --user start pipewire pipewire-pulse wireplumber
+
+echo -e "\033[32m<<==============================>>\033[0m"
+
+if [[ "$MINIMAL_INSTALL" != "s" ]]; then
+    desktop_choices="escritorioxyz"
+    IFS=',' read -ra choices <<< "${desktop_choices:-$DEFAULT_DESKTOP}"
+    
+    for choice in "${choices[@]}"; do
+        case "$(tr -d '[:space:]' <<< "$choice")" in
+            1) pacman -S --noconfirm --overwrite '*' i3-gaps gnome-screenshot \
+              brightnessctl ttf-terminus-nerd \
+              ttf-roboto ttf-font-awesome rofi \
+              picom feh dunst polybar ;;
+            2) pacman -S --noconfirm --overwrite '*' xfce4 xfce4-goodies ;;
+            3) pacman -S --noconfirm --overwrite '*' gnome gnome-extra ;;
+            4) pacman -S --noconfirm --overwrite '*' plasma kde-applications ;;
+            5) pacman -S --noconfirm --overwrite '*' hyprland waybar grim slurp wofi ;;
+            6) pacman -S --noconfirm --overwrite '*' gnome-shell gnome-control-center gdm ;;
+            7) pacman -S --noconfirm --overwrite '*' sway swaylock swayidle wofi ;;
+            8) pacman -S --noconfirm --overwrite '*' mate mate-extra mate-media ;;
+            *) echo "Opción $choice omitida" ;;
+        esac
+    done
+fi
+
+echo -e "\033[32m==== REFRESH ====\033[0m"
+./refresh
+

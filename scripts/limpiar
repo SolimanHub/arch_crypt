@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+set -e -u
+cd /
+# Limpieza de archivos importados
+rm refresh conf grub extras usuarios zsh limpiar
+rm -rf fonts/
+rm lightdm.conf
+rm 50-synaptics.conf
+
+rm -rf Luv
+rm yay_install
+
+echo -e "\033[32m¡Instalación completada con éxito!\033[0m"

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Configurar colores
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+NC='\033[0m'
+
+hostname="temporalxyz"
+
+# Verificar que el archivo sudoers existe antes de moverlo
+if [ -e /sudoers ]; then
+    mv /sudoers /etc/
+else
+    echo "Advertencia: /sudoers no existe. Se omitirá el movimiento."
+fi
+
+# Configuración de zona horaria
+ln -sf /usr/share/zoneinfo/America/Tegucigalpa /etc/localtime
+
+# Configuración de locales
+echo "es_HN.UTF-8 UTF-8" >> /etc/locale.gen
+echo "LANG=es_HN.UTF-8" > /etc/locale.conf
+locale-gen
+
+# Sincronizar el reloj de hardware
+hwclock -w
+
+echo "$hostname" > /etc/hostname
+
+# Configuración de crypttab
+echo "home_crypt UUID=$(blkid -s UUID -o value /dev/mapper/home_crypt) none luks" > /etc/crypttab
+echo "root_crypt UUID=$(blkid -s UUID -o value /dev/mapper/root_crypt) none luks" >> /etc/crypttab
+
+# Ejecutar configuración de usuarios
+echo -e "\033[32m==== USUARIOS ====\033[0m"
+./usuarios

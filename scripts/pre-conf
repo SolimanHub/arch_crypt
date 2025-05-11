@@ -1,0 +1,22 @@
+#!/usr/bin/bash
+set -e -u
+# Configurar colores
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+NC='\033[0m'
+
+cp ./scripts/configs/* /mnt
+cp ./scripts/conf /mnt
+cp ./scripts/limpiar /mnt
+cp ./scripts/grub /mnt
+cp ./scripts/extras /mnt
+cp ./scripts/usuarios /mnt
+cp ./scripts/zsh /mnt
+cp ./scripts/refresh /mnt
+cp ./scripts/yay_install /mnt
+cp -r ./scripts/fonts/ /mnt
+
+echo -e "\033[32m==== CONF ====\033[0m"
+echo -e "arch-chroot /mnt /conf"
+arch-chroot /mnt /conf
