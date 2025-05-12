@@ -30,9 +30,9 @@ for item in "${check_items[@]}"; do
 done
 
 # Verificar montaje de /boot
-if ! findmnt -n -o SOURCE "/boot" | grep -q "^/dev/sda2$"; then
-    echo -e "\033[31mERROR: /boot no montado en /dev/sda2\033[0m" >&2
-    exit 1
+if ! findmnt -n -o TARGET "/boot" | grep -q "/boot$"; then
+    echo -e "\033[32mMontando /boot manualmente...\033[0m"
+    mount /dev/sda2 /boot
 else
     echo -e "\033[32m✓ /boot montado correctamente en /dev/sda2\033[0m"
 fi

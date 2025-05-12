@@ -27,17 +27,18 @@ mv ./grub_conf /etc/default/grub
 # Instalación de GRUB con opciones mejoradas
 echo "Instalando GRUB en modo UEFI..."
 grub-install --target=x86_64-efi \
-    --efi-directory=/boot/efi \  
-    --bootloader-id=GRUB \
-    --modules="luks2 part_gpt cryptodisk ext2" \
-    --debug \
-    --recheck  
+    --efi-directory=/efi \          # Directorio UEFI estándar
+    --bootloader-id=ARCH_CRYPT \
+    --modules="luks2 part_gpt cryptodisk ext2 gcry_sha512 gcry_rijndael" \
+    --recheck \
+    --debug
 
 # Generar configuración incluyendo otros sistemas
 echo "Generando configuración de GRUB..."
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Configuración avanzada del sistema
+[ -f /etc/vconsole.conf ] || touch /etc/vconsole.conf
 sed -i 's/^HOOKS=.*/HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -P
 

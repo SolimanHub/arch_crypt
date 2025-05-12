@@ -20,6 +20,8 @@ pacstrap /mnt base linux-firmware $selected_kernels cryptsetup lvm2
 echo "Generando fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
+echo "UUID=$(blkid -s UUID -o value /dev/sda2) /boot ext4 defaults 0 2" >> /mnt/etc/fstab
+
 # --- Continuar configuración ---
 echo "Ejecutando pre-conf..."
 echo "<<==============================>>"

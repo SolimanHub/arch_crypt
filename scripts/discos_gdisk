@@ -122,8 +122,8 @@ echo -e "\n=== Montando particiones ==="
 mount /dev/mapper/root_crypt /mnt
 mkdir -p /mnt/boot
 mount "${DISCO}2" /mnt/boot
-mkdir -p /mnt/boot/efi
-mount "${DISCO}1" /mnt/boot/efi
+mkdir -p /mnt/efi
+mount "${DISCO}1" /mnt/efi  # Cumple con estándar UEFI
 mkdir -p /mnt/home
 mount /dev/mapper/home_crypt /mnt/home
 
@@ -135,4 +135,3 @@ echo -e "\033[32mSigue ./paquetes\033[0m"
 
 echo -e "\033[32m==== PAQUETES ====\033[0m"
 ./scripts/paquetes
-
