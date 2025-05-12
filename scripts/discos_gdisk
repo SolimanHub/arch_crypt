@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 # Configurar colores
 RED='\033[31m'
 GREEN='\033[32m'
@@ -27,7 +28,7 @@ tamanio_mb=$((tamanio_bytes / 1024 / 1024))
 
 # Definir tamaños fijos y calcular espacio flexible
 swap_size_mb=2048
-overhead=$((swap_size_mb))
+overhead=$((swap_size_mb + 1024 + 550))  # 2GB swap + 1GB /boot + 550MB EFI
 flexible=$((tamanio_mb - overhead))
 flexible_gb=$(( flexible / 1024 ))
 
@@ -51,7 +52,9 @@ root_gb=$(( root_mb / 1024 ))
 home_gb=$(( home_mb / 1024 ))
 
 echo -e "\nResumen de particiones:"
-echo -e "\033[32m• Swap: 2 GB (2048 MB)\033[0m"
+echo -e "\033[32m• EFI: 550 MB\033[0m"
+echo -e "\033[32m• /boot: 1 GB\033[0m"
+echo -e "\033[32m• Swap: 2 GB\033[0m"
 echo -e "\033[32m• /home: ${home_gb} GB (${home_percent}%)\033[0m"
 echo -e "\033[32m• / (root): ${root_gb} GB\033[0m"
 
@@ -66,12 +69,17 @@ n
 +550M
 EF00
 n
-2
+
+
++1G
+8300
+n
+
 
 +${swap_size_mb}M
 8200
 n
-3
+
 
 +${home_mb}M
 
@@ -85,17 +93,15 @@ Y
 EOF
 
 echo -e "\n=== Formateando particiones ==="
-mkfs.ext4 "${DISCO}4"      # Raíz
-sync
-mkfs.ext4 "${DISCO}3"      # Home
-sync
 mkfs.fat -F32 "${DISCO}1"   # EFI
 sync
-mkswap "${DISCO}2"         # Swap
+mkfs.ext4 "${DISCO}2"       # /boot
+sync
+mkswap "${DISCO}3"          # Swap
+sync
 
 echo -e "\n=== Encriptando particiones ==="
-# Parámetros modernos de cifrado para root y home
-for partition in 3 4; do
+for partition in 4 5; do
     cryptsetup luksFormat --type luks2 \
         --pbkdf argon2id \
         --iter-time 4000 \
@@ -105,8 +111,8 @@ for partition in 3 4; do
 done
 
 echo -e "\n=== Abriendo particiones encriptadas ==="
-cryptsetup luksOpen "${DISCO}3" home_crypt
-cryptsetup luksOpen "${DISCO}4" root_crypt
+cryptsetup luksOpen "${DISCO}4" home_crypt
+cryptsetup luksOpen "${DISCO}5" root_crypt
 
 echo -e "\n=== Formateando particiones encriptadas ==="
 mkfs.ext4 /dev/mapper/home_crypt
@@ -114,16 +120,19 @@ mkfs.ext4 /dev/mapper/root_crypt
 
 echo -e "\n=== Montando particiones ==="
 mount /dev/mapper/root_crypt /mnt
+mkdir -p /mnt/boot
+mount "${DISCO}2" /mnt/boot
+mkdir -p /mnt/boot/efi
+mount "${DISCO}1" /mnt/boot/efi
 mkdir -p /mnt/home
 mount /dev/mapper/home_crypt /mnt/home
-mkdir -p /mnt/boot/EFI
-mount "${DISCO}1" /mnt/boot/EFI
 
 echo -e "\nActivando swap..."
-swapon "${DISCO}2"
+swapon "${DISCO}3"
 
 echo -e "\nProceso finalizado."
 echo -e "\033[32mSigue ./paquetes\033[0m"
 
 echo -e "\033[32m==== PAQUETES ====\033[0m"
 ./scripts/paquetes
+

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 
 # Configurar colores
 RED='\033[31m'

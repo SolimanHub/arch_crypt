@@ -1,20 +1,46 @@
 #!/usr/bin/bash
-set -e -u
+set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 cd /
+
 # Limpieza de archivos importados
-rm refresh conf grub extras usuarios zsh limpiar
+rm -f refresh conf grub extras usuarios zsh limpiar
 rm -rf fonts/
-rm lightdm.conf
-rm 50-synaptics.conf
+rm -f lightdm.conf 50-synaptics.conf
+rm -rf Luv yay_install
 
-rm -rf Luv
-rm yay_install
+# Chequeo extendido de configuración
+echo -e "\n\033[32m=== Verificación final ===\033[0m"
 
-# Verificar estructura de archivos críticos
-lsblk -f
-blkid
-cat /boot/grub/grub.cfg | grep cryptodisk
+# Verificar archivos críticos
+check_items=(
+    "/boot/grub/grub.cfg"
+    "/etc/crypttab"
+    "/etc/default/grub"
+    "/etc/mkinitcpio.conf"
+)
 
-echo -e "\033[32m¡Instalación completada con éxito!\033[0m"
+for item in "${check_items[@]}"; do
+    if [[ ! -f "$item" ]]; then
+        echo -e "\033[31mERROR: Archivo crítico faltante - $item\033[0m" >&2
+        exit 1
+    else
+        echo -e "\033[32m✓ $item existe\033[0m"
+    fi
+done
 
+# Verificar montaje de /boot
+if ! findmnt -n -o SOURCE "/boot" | grep -q "^/dev/sda2$"; then
+    echo -e "\033[31mERROR: /boot no montado en /dev/sda2\033[0m" >&2
+    exit 1
+else
+    echo -e "\033[32m✓ /boot montado correctamente en /dev/sda2\033[0m"
+fi
 
+# Verificar módulos de cifrado en GRUB
+if ! grep -q "cryptodisk" /boot/grub/grub.cfg; then
+    echo -e "\033[31mERROR: Módulos de cifrado no detectados en GRUB\033[0m" >&2
+    exit 1
+fi
+
+echo -e "\n\033[32m¡Instalación completada con éxito!\033[0m"

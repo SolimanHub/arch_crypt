@@ -1,5 +1,6 @@
 #!/usr/bin/bash
-set -e -u
+set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 
 # Mostrar las unidades disponibles para que el usuario seleccione dónde instalar GRUB
 echo "===== Unidades disponibles para instalar GRUB ====="
@@ -9,46 +10,41 @@ echo
 disk="instalargruben"
 GRUB_DISK="/dev/$disk"
 
-# Actualizar las bases para evitar errores
-pacman -Syy
-pacman -S grub grub-btrfs --noconfirm   # Modificado: agregado grub-btrfs y eliminado efibootmgr
+# Actualizar las bases e instalar dependencias críticas
+pacman -Syy --noconfirm grub efibootmgr os-prober  # Modificado: paquetes actualizados
 
-# Verificar si existe una partición EFI montada en /boot/EFI
-if ! mountpoint -q /boot/EFI; then
-    echo "Error: La partición EFI no está montada en /boot/EFI."
+# Verificar montaje de EFI en nuevo directorio
+if ! mountpoint -q /boot/efi; then  # Modificado: directorio /efi en minúsculas
+    echo "Error: La partición EFI no está montada en /boot/efi."
     echo "Asegúrate de haber creado y montado una partición EFI antes de continuar."
     exit 1
 fi
 
-# Reemplazar el archivo de configuración de GRUB
-if [ -f /etc/default/grub ]; then
-    rm /etc/default/grub
-fi
+# Reemplazar configuración de GRUB
+[ -f /etc/default/grub ] && rm /etc/default/grub
 mv ./grub_conf /etc/default/grub
 
-# Instalar GRUB en modo UEFI con módulos para LUKS
+# Instalación de GRUB con opciones mejoradas
 echo "Instalando GRUB en modo UEFI..."
 grub-install --target=x86_64-efi \
-    --efi-directory=/boot/EFI \
+    --efi-directory=/boot/efi \  
     --bootloader-id=GRUB \
-    --modules="luks2 part_gpt cryptodisk ext2"  # Modificado: agregados módulos y eliminado --removable
+    --modules="luks2 part_gpt cryptodisk ext2" \
+    --debug \
+    --recheck  
 
-# Generar la configuración inicial de GRUB
+# Generar configuración incluyendo otros sistemas
 echo "Generando configuración de GRUB..."
 grub-mkconfig -o /boot/grub/grub.cfg
 
-# Regenerar la configuración de GRUB con el nuevo archivo
-echo "Regenerando configuración de GRUB..."
-grub-mkconfig -o /boot/grub/grub.cfg
-
-# Añadir hooks críticos
+# Configuración avanzada del sistema
 sed -i 's/^HOOKS=.*/HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-mkinitcpio -P  # Regenerar initramfs después de cambiar
+mkinitcpio -P
 
-# Generar crypttab con UUIDs persistentes
+# Configurar crypttab con UUID persistentes
 echo "root_crypt UUID=$(blkid -s UUID -o value /dev/sda4) none luks,discard" > /etc/crypttab
 echo "home_crypt UUID=$(blkid -s UUID -o value /dev/sda3) none luks,discard" >> /etc/crypttab
 
-# Instalar paquetes extras
+# Instalación de paquetes adicionales
 echo -e "\033[32m==== EXTRAS ====\033[0m"
 ./extras

@@ -5,40 +5,46 @@ GRUB_TIMEOUT=1
 GRUB_DISTRIBUTOR="Arch"
 GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"
 
-# -- Configuración UUID personalizada --
-ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/root_crypt)
-HOME_UUID=$(blkid -s UUID -o value /dev/mapper/home_crypt)
+# -- Configuración UUID dinámica --
+# Obtención segura de UUIDs con validación
+ROOT_UUID=$(blkid -s UUID -o value /dev/mapper/root_crypt 2>/dev/null || echo "ERROR_ROOT_UUID")
+HOME_UUID=$(blkid -s UUID -o value /dev/mapper/home_crypt 2>/dev/null || echo "ERROR_HOME_UUID")
+
+# Validación básica de UUIDs
+if [[ "$ROOT_UUID" == "ERROR_ROOT_UUID" || "$HOME_UUID" == "ERROR_HOME_UUID" ]]; then
+    echo "Error: No se encontraron UUIDs de particiones cifradas" >&2
+    exit 1
+fi
 
 GRUB_CMDLINE_LINUX="cryptdevice=UUID=${ROOT_UUID}:root_crypt \
 cryptdevice=UUID=${HOME_UUID}:home_crypt"
 
 # -- Resto de la configuración --
-GRUB_PRELOAD_MODULES="part_gpt part_msdos"
+GRUB_PRELOAD_MODULES="part_gpt part_msdos cryptodisk luks2"
 
 GRUB_ENABLE_CRYPTODISK=y
 
 GRUB_TIMEOUT_STYLE=menu
 
-# Letras comentadas (Opcional)
+# Configuración de terminal
 GRUB_TERMINAL_INPUT=console
 #GRUB_TERMINAL_OUTPUT=console
 
+# Resolución gráfica
 GRUB_GFXMODE=1920x1080
 GRUB_GFXPAYLOAD_LINUX=keep
 
-#GRUB_DISABLE_LINUX_UUID=true
+# Opciones de seguridad
 GRUB_DISABLE_RECOVERY=true
+GRUB_DISABLE_OS_PROBER=false
 
-# -- Resto de las opciones ->
+# -- Opciones adicionales (comentadas) --
+# Descomentar según necesidades específicas
 #GRUB_COLOR_NORMAL="light-blue/black"
 #GRUB_COLOR_HIGHLIGHT="light-cyan/blue"
-
 #GRUB_BACKGROUND="/path/to/wallpaper"
 #GRUB_THEME="/path/to/gfxtheme"
-
 #GRUB_INIT_TUNE="480 440 1"
-
 #GRUB_SAVEDEFAULT=true
 #GRUB_DISABLE_SUBMENU=y
-GRUB_DISABLE_OS_PROBER=false
 

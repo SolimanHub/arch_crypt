@@ -1,5 +1,8 @@
 #!/bin/bash 
 
+set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
+
 USER_HOME="/home/usuarioxyz"
 USER_NAME="usuarioxyz"
 

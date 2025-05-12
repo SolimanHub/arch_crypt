@@ -3,6 +3,7 @@
 # Retorna valores originales a variables
 #
 set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 
 sed -i -E 's/^hostname="[^"]+"/hostname="temporalxyz"/' conf
 sed -i -E 's/[[:space:]]root_pass="[^"]+"/[[:space:]]root_pass="tu_password_root"/' usuarios

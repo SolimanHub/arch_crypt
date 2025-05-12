@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 # Configurar colores
 RED='\033[31m'
 GREEN='\033[32m'
@@ -28,9 +29,9 @@ hwclock -w
 
 echo "$hostname" > /etc/hostname
 
-# Configuración de crypttab
-echo "home_crypt UUID=$(blkid -s UUID -o value /dev/mapper/home_crypt) none luks" > /etc/crypttab
-echo "root_crypt UUID=$(blkid -s UUID -o value /dev/mapper/root_crypt) none luks" >> /etc/crypttab
+# Usar UUIDs persistentes de las particiones físicas
+echo "home_crypt UUID=$(blkid -s UUID -o value /dev/sda4) none luks,discard" > /etc/crypttab
+echo "root_crypt UUID=$(blkid -s UUID -o value /dev/sda5) none luks,discard" >> /etc/crypttab
 
 # Ejecutar configuración de usuarios
 echo -e "\033[32m==== USUARIOS ====\033[0m"
