@@ -5,6 +5,7 @@ cd /
 
 # Limpieza de archivos importados
 rm -f refresh conf grub extras usuarios zsh limpiar
+rm -f grub_conf
 rm -rf fonts/
 rm -f lightdm.conf 50-synaptics.conf
 rm -rf Luv yay_install

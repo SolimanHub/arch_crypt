@@ -53,7 +53,6 @@ fi
 # ===== Configuración avanzada de hooks =====
 echo -e "\033[32mConfigurando hooks para descifrado temprano...\033[0m"
 sed -i 's/^HOOKS=.*/HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
-
 # Validación de hooks críticos
 required_hooks=("base" "systemd" "autodetect" "keyboard" "sd-vconsole" "modconf" "block" "sd-encrypt" "lvm2" "filesystems" "fsck")
 current_hooks=$(grep ^HOOKS /etc/mkinitcpio.conf | cut -d= -f2 | tr -d '() ')

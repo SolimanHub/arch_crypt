@@ -1,30 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
-trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
+trap 'echo -e "${RED}Error en línea $LINENO. Comando: $BASH_COMMAND${NC}"' ERR
 # Configurar colores
 RED='\033[31m'
 GREEN='\033[32m'
 YELLOW='\033[33m'
+BLUE='\033[34m'
+MAGENTA='\033[35m'
+CYAN='\033[36m'
 NC='\033[0m'
 
 # --- Instalación base ---
 selected_kernels="selected_kernelsxyz"
 
 # Mostrar los kernels seleccionados
-echo "Kernels seleccionados: $selected_kernels"
+echo -e "${CYAN}Kernels seleccionados: ${YELLOW}$selected_kernels${NC}"
 
 # Instalar los paquetes base junto con los kernels seleccionados
+echo -e "${GREEN}Instalando sistema base...${NC}"
 pacstrap /mnt base linux-firmware $selected_kernels cryptsetup lvm2
 
 # --- Generar fstab ---
-echo "Generando fstab..."
+echo -e "${GREEN}Generando fstab...${NC}"
 genfstab -U /mnt >> /mnt/etc/fstab
 
+echo -e "${BLUE}Agregando entrada específica para /boot...${NC}"
 echo "UUID=$(blkid -s UUID -o value /dev/sda2) /boot ext4 defaults 0 2" >> /mnt/etc/fstab
 
 # --- Continuar configuración ---
-echo "Ejecutando pre-conf..."
-echo "<<==============================>>"
+echo -e "${YELLOW}Ejecutando pre-conf...${NC}"
+echo -e "${MAGENTA}<<==============================>>${NC}"
 
-echo -e "\033[32m==== PRE-CONF ====\033[0m"
+echo -e "${GREEN}==== PRE-CONF ====${NC}"
 ./scripts/pre-conf

@@ -1,9 +1,16 @@
 #!/usr/bin/bash
 set -euo pipefail
-trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
+trap 'echo -e "${RED}Error en línea $LINENO. Comando: $BASH_COMMAND${NC}"' ERR
+
+# Configurar colores
+RED='\033[31m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+NC='\033[0m'
 
 # Mostrar las unidades disponibles para que el usuario seleccione dónde instalar GRUB
-echo "===== Unidades disponibles para instalar GRUB ====="
+echo -e "${YELLOW}===== Unidades disponibles para instalar GRUB =====${NC}"
 lsblk -d -o NAME,SIZE,MODEL
 echo
 #read -rp "Ingrese el nombre de la unidad (ejemplo: sda): " disk
@@ -11,41 +18,45 @@ disk="instalargruben"
 GRUB_DISK="/dev/$disk"
 
 # Actualizar las bases e instalar dependencias críticas
-pacman -Syy --noconfirm grub efibootmgr os-prober  # Modificado: paquetes actualizados
+echo -e "${GREEN}Instalando dependencias principales de GRUB y UEFI...${NC}"
+pacman -Syy --noconfirm grub efibootmgr os-prober
 
 # Verificar montaje de EFI en nuevo directorio
-if ! mountpoint -q /boot/efi; then  # Modificado: directorio /efi en minúsculas
-    echo "Error: La partición EFI no está montada en /boot/efi."
-    echo "Asegúrate de haber creado y montado una partición EFI antes de continuar."
+if ! mountpoint -q /boot/efi; then
+    echo -e "${RED}Error: La partición EFI no está montada en /boot/efi.${NC}"
+    echo -e "${RED}Asegúrate de haber creado y montado una partición EFI antes de continuar.${NC}"
     exit 1
 fi
 
 # Reemplazar configuración de GRUB
+echo -e "${GREEN}Copiando configuración de GRUB predeterminada...${NC}"
 [ -f /etc/default/grub ] && rm /etc/default/grub
-mv ./grub_conf /etc/default/grub
+cp ./grub_conf /etc/default/grub
 
 # Instalación de GRUB con opciones mejoradas
-echo "Instalando GRUB en modo UEFI..."
+echo -e "${GREEN}Instalando GRUB en modo UEFI...${NC}"
 grub-install --target=x86_64-efi \
-    --efi-directory=/efi \          # Directorio UEFI estándar
+    --efi-directory=/boot/efi \
     --bootloader-id=ARCH_CRYPT \
     --modules="luks2 part_gpt cryptodisk ext2 gcry_sha512 gcry_rijndael" \
     --recheck \
     --debug
 
 # Generar configuración incluyendo otros sistemas
-echo "Generando configuración de GRUB..."
+echo -e "${GREEN}Generando configuración de GRUB...${NC}"
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Configuración avanzada del sistema
+echo -e "${GREEN}Actualizando hooks de mkinitcpio.conf y regenerando initramfs...${NC}"
 [ -f /etc/vconsole.conf ] || touch /etc/vconsole.conf
 sed -i 's/^HOOKS=.*/HOOKS=(base systemd autodetect keyboard sd-vconsole modconf block sd-encrypt lvm2 filesystems fsck)/' /etc/mkinitcpio.conf
 mkinitcpio -P
 
 # Configurar crypttab con UUID persistentes
-echo "root_crypt UUID=$(blkid -s UUID -o value /dev/sda4) none luks,discard" > /etc/crypttab
-echo "home_crypt UUID=$(blkid -s UUID -o value /dev/sda3) none luks,discard" >> /etc/crypttab
+echo -e "${BLUE}Configurando /etc/crypttab con UUIDs persistentes...${NC}"
+echo "root_crypt UUID=$(blkid -s UUID -o value /dev/sda5) none luks,discard" > /etc/crypttab
+echo "home_crypt UUID=$(blkid -s UUID -o value /dev/sda4) none luks,discard" >> /etc/crypttab
 
 # Instalación de paquetes adicionales
-echo -e "\033[32m==== EXTRAS ====\033[0m"
+echo -e "${GREEN}==== EXTRAS ====${NC}"
 ./extras
