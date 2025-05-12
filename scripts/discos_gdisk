@@ -94,8 +94,15 @@ sync
 mkswap "${DISCO}2"         # Swap
 
 echo -e "\n=== Encriptando particiones ==="
-cryptsetup luksFormat --type luks2 "${DISCO}3"
-cryptsetup luksFormat --type luks2 "${DISCO}4"
+# Parámetros modernos de cifrado para root y home
+for partition in 3 4; do
+    cryptsetup luksFormat --type luks2 \
+        --pbkdf argon2id \
+        --iter-time 4000 \
+        --key-size 512 \
+        --hash sha3-512 \
+        "${DISCO}${partition}"
+done
 
 echo -e "\n=== Abriendo particiones encriptadas ==="
 cryptsetup luksOpen "${DISCO}3" home_crypt

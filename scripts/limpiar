@@ -10,4 +10,11 @@ rm 50-synaptics.conf
 rm -rf Luv
 rm yay_install
 
+# Verificar estructura de archivos críticos
+lsblk -f
+blkid
+cat /boot/grub/grub.cfg | grep cryptodisk
+
 echo -e "\033[32m¡Instalación completada con éxito!\033[0m"
+
+
