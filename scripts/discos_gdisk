@@ -122,8 +122,8 @@ echo -e "\n=== Montando particiones ==="
 mount /dev/mapper/root_crypt /mnt
 mkdir -p /mnt/boot
 mount "${DISCO}2" /mnt/boot
-mkdir -p /mnt/efi
-mount "${DISCO}1" /mnt/efi  # Cumple con estándar UEFI
+mkdir -p /mnt/EFI
+mount "${DISCO}1" /mnt/boot/EFI  
 mkdir -p /mnt/home
 mount /dev/mapper/home_crypt /mnt/home
 
