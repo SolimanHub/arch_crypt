@@ -20,6 +20,12 @@ if ! mountpoint -q /boot/EFI; then
     exit 1
 fi
 
+# Reemplazar el archivo de configuración de GRUB
+if [ -f /etc/default/grub ]; then
+    rm /etc/default/grub
+fi
+mv ./grub_conf /etc/default/grub
+
 # Instalar GRUB en modo UEFI
 echo "Instalando GRUB en modo UEFI..."
 grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB --removable
@@ -28,11 +34,6 @@ grub-install --target=x86_64-efi --efi-directory=/boot/EFI --bootloader-id=GRUB 
 echo "Generando configuración de GRUB..."
 grub-mkconfig -o /boot/grub/grub.cfg
 
-# Reemplazar el archivo de configuración de GRUB
-if [ -f /etc/default/grub ]; then
-    rm /etc/default/grub
-fi
-mv ./grub_conf /etc/default/grub
 
 # Regenerar la configuración de GRUB con el nuevo archivo
 echo "Regenerando configuración de GRUB..."
