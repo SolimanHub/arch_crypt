@@ -30,4 +30,4 @@ echo -e "${YELLOW}Ejecutando pre-conf...${NC}"
 echo -e "${MAGENTA}<<==============================>>${NC}"
 
 echo -e "${GREEN}==== PRE-CONF ====${NC}"
-./scripts/pre-conf
+./pre-conf

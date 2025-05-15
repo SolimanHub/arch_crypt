@@ -35,7 +35,7 @@ if [[ -n "$microcode" ]]; then
     pacman -S --needed --noconfirm --overwrite='*' "$microcode"
 fi
 
-Instalar systemd-boot
+#Instalar systemd-boot
 bootctl install
 
 echo -e "${GREEN}Crear archivo de configuración principal${NC}"
