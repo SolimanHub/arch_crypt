@@ -15,7 +15,7 @@ lsblk -d -o NAME,SIZE,TYPE | grep disk
 echo
 read -p "Disco (ej. sda): " unidad
 DISCO="/dev/$unidad"
-sed -i "s/buscarUUID/$unidad/" systemd_boot
+sed -i "s/buscarUUID/$unidad/" ./scripts/systemd_boot
 
 if [ ! -b "$DISCO" ]; then
     echo -e "\033[31mError: La unidad '$DISCO' no existe.\033[0m"
@@ -111,5 +111,5 @@ echo -e "\nProceso finalizado."
 echo -e "\033[32mSigue ./paquetes\033[0m"
 
 echo -e "\033[32m==== PAQUETES ====\033[0m"
-./paquetes
+./scripts/paquetes
 
