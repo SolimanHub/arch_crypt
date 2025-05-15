@@ -34,10 +34,9 @@ hwclock -w
 echo -e "${GREEN}Asignando hostname: ${YELLOW}$hostname${NC}"
 echo "$hostname" > /etc/hostname
 
-# Usar UUIDs persistentes de las particiones físicas
-echo -e "${GREEN}Configurando /etc/crypttab con UUIDs persistentes...${NC}"
-echo "home_crypt UUID=$(blkid -s UUID -o value /dev/sda4) none luks,discard" > /etc/crypttab
-echo "root_crypt UUID=$(blkid -s UUID -o value /dev/sda5) none luks,discard" >> /etc/crypttab
+echo -e "${GREEN}Configurar mkinitcpio"
+sed -i '/^HOOKS=/ s/\(block\)/\1 sd-encrypt encrypt lvm2/' /etc/mkinitcpio.conf
+mkinitcpio -P
 
 # Ejecutar configuración de usuarios
 echo -e "${GREEN}==== USUARIOS ====${NC}"

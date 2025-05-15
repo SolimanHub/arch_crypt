@@ -25,30 +25,7 @@ detect_gpu_drivers() {
     fi
 }
 
-# ===== Detección automática del procesador =====
-detect_microcode() {
-    local vendor
-    vendor=$(grep -m1 -oP 'vendor_id\s*:\s*\K.*' /proc/cpuinfo | tr -d ' ')
-    
-    if [[ "$vendor" == *"GenuineIntel"* ]]; then
-        echo -e "\033[32mIntel detectado. Instalando intel-ucode\033[0m"
-        microcode="intel-ucode"
-    elif [[ "$vendor" == *"AuthenticAMD"* ]]; then
-        echo -e "\033[32mAMD detectado. Instalando amd-ucode\033[0m"
-        microcode="amd-ucode"
-    else
-        echo -e "\033[32mProcesador no reconocido. No se instalará microcódigo.\033[0m"
-        microcode=""
-    fi
-}
 
-# Llamar a la función de detección
-detect_microcode
-
-# Instalar microcódigo si se detectó
-if [[ -n "$microcode" ]]; then
-    pacman -S --needed --noconfirm --overwrite='*' "$microcode"
-fi
 
 # ===== Configuración avanzada de hooks =====
 echo -e "\033[32mConfigurando hooks para descifrado temprano...\033[0m"

@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 set -euo pipefail
 trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
+
 # Configurar colores
 RED='\033[31m'
 GREEN='\033[32m'
@@ -10,14 +11,14 @@ NC='\033[0m'
 cp ./scripts/configs/* /mnt
 cp ./scripts/conf /mnt
 cp ./scripts/limpiar /mnt
-cp ./scripts/grub /mnt
 cp ./scripts/extras /mnt
 cp ./scripts/usuarios /mnt
+cp ./scripts/systemd_boot /mnt
 cp ./scripts/zsh /mnt
 cp ./scripts/refresh /mnt
 cp ./scripts/yay_install /mnt
 cp -r ./scripts/fonts/ /mnt
 
 echo -e "\033[32m==== CONF ====\033[0m"
-echo -e "arch-chroot /mnt /conf"
-arch-chroot /mnt /conf
+echo -e "arch-chroot /mnt /bin/zsh /conf"
+arch-chroot /mnt /bin/zsh /conf

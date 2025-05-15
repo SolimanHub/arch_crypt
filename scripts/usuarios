@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 set -euo pipefail
 trap 'echo -e "${RED}Error en línea $LINENO. Comando: $BASH_COMMAND${NC}"' ERR
+
 # Configurar colores
 RED='\033[31m'
 GREEN='\033[32m'
@@ -24,4 +25,4 @@ echo -e "${YELLOW}===== Crear contraseña para ${usuario} =====${NC}"
 echo "$usuario:$user_pass" | chpasswd
 
 echo -e "${GREEN}==== GRUB ====${NC}"
-./grub
+./systemd_boot

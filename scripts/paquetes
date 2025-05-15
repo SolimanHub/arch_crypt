@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 trap 'echo -e "${RED}Error en línea $LINENO. Comando: $BASH_COMMAND${NC}"' ERR
+
 # Configurar colores
 RED='\033[31m'
 GREEN='\033[32m'
@@ -18,14 +19,11 @@ echo -e "${CYAN}Kernels seleccionados: ${YELLOW}$selected_kernels${NC}"
 
 # Instalar los paquetes base junto con los kernels seleccionados
 echo -e "${GREEN}Instalando sistema base...${NC}"
-pacstrap /mnt base linux-firmware $selected_kernels cryptsetup lvm2
+pacstrap /mnt base linux-firmware $selected_kernels cryptsetup lvm2 neovim zsh
 
 # --- Generar fstab ---
 echo -e "${GREEN}Generando fstab...${NC}"
 genfstab -U /mnt >> /mnt/etc/fstab
-
-echo -e "${BLUE}Agregando entrada específica para /boot...${NC}"
-echo "UUID=$(blkid -s UUID -o value /dev/sda2) /boot ext4 defaults 0 2" >> /mnt/etc/fstab
 
 # --- Continuar configuración ---
 echo -e "${YELLOW}Ejecutando pre-conf...${NC}"

@@ -4,44 +4,9 @@ trap 'echo "Error en línea $LINENO. Comando: $BASH_COMMAND"' ERR
 cd /
 
 # Limpieza de archivos importados
-rm -f refresh conf grub extras usuarios zsh limpiar
-rm -f grub_conf
+rm -f refresh conf systemd_boot extras usuarios zsh limpiar
 rm -rf fonts/
 rm -f lightdm.conf 50-synaptics.conf
 rm -rf Luv yay_install
-
-# Chequeo extendido de configuración
-echo -e "\n\033[32m=== Verificación final ===\033[0m"
-
-# Verificar archivos críticos
-check_items=(
-    "/boot/grub/grub.cfg"
-    "/etc/crypttab"
-    "/etc/default/grub"
-    "/etc/mkinitcpio.conf"
-)
-
-for item in "${check_items[@]}"; do
-    if [[ ! -f "$item" ]]; then
-        echo -e "\033[31mERROR: Archivo crítico faltante - $item\033[0m" >&2
-        exit 1
-    else
-        echo -e "\033[32m✓ $item existe\033[0m"
-    fi
-done
-
-# Verificar montaje de /boot
-if ! findmnt -n -o TARGET "/boot" | grep -q "/boot$"; then
-    echo -e "\033[32mMontando /boot manualmente...\033[0m"
-    mount /dev/sda2 /boot
-else
-    echo -e "\033[32m✓ /boot montado correctamente en /dev/sda2\033[0m"
-fi
-
-# Verificar módulos de cifrado en GRUB
-if ! grep -q "cryptodisk" /boot/grub/grub.cfg; then
-    echo -e "\033[31mERROR: Módulos de cifrado no detectados en GRUB\033[0m" >&2
-    exit 1
-fi
 
 echo -e "\n\033[32m¡Instalación completada con éxito!\033[0m"
