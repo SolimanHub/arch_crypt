@@ -53,10 +53,6 @@ initrd /intel-ucode.img (o amd-ucode.img)
 initrd /initramfs-linux.img
 options cryptdevice=UUID=<TU-UUID-AQUI>:cryptlvm root=/dev/vol01/root rw" > /boot/loader/entries/arch.conf
 
-echo -e "${GREEN}Verificar que el archivo arch.conf tenga el UUID correcto${NC}"
-disk="buscarUUID"
-sed -i "s/<TU-UUID-AQUI>/$(blkid -s UUID -o value /dev/$disk)/" /boot/loader/entries/arch.conf
-
 # Instalación de paquetes adicionales
 echo -e "${GREEN}==== EXTRAS ====${NC}"
 ./extras
