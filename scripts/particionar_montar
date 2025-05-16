@@ -61,24 +61,24 @@ cryptsetup luksFormat --type luks2 \
 echo -e "\033[32m\n=== Configurando LVM ===\033[0m"
 cryptsetup open "${DISCO}2" cryptlvm
 pvcreate /dev/mapper/cryptlvm
-vgcreate vol0 /dev/mapper/cryptlvm
+vgcreate vol01 /dev/mapper/cryptlvm
 
 # Calcular espacio restante después de swap
-ESPACIO_LVM=$(($(vgdisplay vol0 --units m | awk '/Free PE/{print $5}') - SWAP_SIZE))
+ESPACIO_LVM=$(($(vgdisplay vol01 --units m | awk '/Free PE/{print $5}') - SWAP_SIZE))
 
-lvcreate -L "${SWAP_SIZE}M" -n swap vol0
-lvcreate -l 100%FREE -n root vol0  # Ajustado para usar todo el espacio restante
+lvcreate -L "${SWAP_SIZE}M" -n swap vol01
+lvcreate -l 100%FREE -n root vol01  # Ajustado para usar todo el espacio restante
 
 echo -e "\033[32m\n=== Formateando volúmenes lógicos ===\033[0m"
-mkfs.ext4 /dev/vol0/root
-mkswap /dev/vol0/swap
+mkfs.ext4 /dev/vol01/root
+mkswap /dev/vol01/swap
 
 echo -e "\033[32m\n=== Montando particiones ===\033[0m"
-mount /dev/vol0/root /mnt
+mount /dev/vol01/root /mnt
 mount --mkdir "${DISCO}1" /mnt/boot
 
 echo -e "\033[32m\nActivando swap...\033[0m"
-swapon /dev/vol0/swap
+swapon /dev/vol01/swap
 
 # --- Nuevo: Obtener UUID de la partición LUKS para systemd-boot ---
 LUKS_UUID=$(blkid -s UUID -o value "${DISCO}2")
