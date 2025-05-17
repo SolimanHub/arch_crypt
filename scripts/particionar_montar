@@ -66,10 +66,10 @@ crear_home=${crear_home:-S}
 
 if [[ "$crear_home" =~ [sS] ]]; then
     total_vg_mib=$(vgs vol01 --units m -o vg_size --noheadings | sed 's/[[:alpha:]]//g' | awk '{print int($1)}')
-    home_max_mib=$((total_vg_mib - 34*1024))  # 34GB = 2GB (swap) + 32GB (root mín)
+    home_max_mib=$((total_vg_mib - 22*1024))  # 22GB = 2GB (swap) + 20GB (root mín)
     
     if (( home_max_mib <= 0 )); then
-        echo -e "${RED}Error: Espacio insuficiente. Necesitas al menos 34GB para swap y root.${NC}"
+        echo -e "${RED}Error: Espacio insuficiente. Necesitas al menos 22GB para swap y root.${NC}"
         exit 1
     fi
     
@@ -118,9 +118,10 @@ fi
 swapon /dev/vol01/swap
 
 # Configurar UUID para systemd-boot
-LUKS_UUID=$(blkid -s UUID -o value "${DISCO}2")
-sed -i "s/<TU-UUID-AQUI>/${LUKS_UUID}/g" ./scripts/systemd_boot
+#LUKS_UUID=$(blkid -s UUID -o value "${DISCO}2")
+#sed -i "s/<TU-UUID-AQUI>/${LUKS_UUID}/g" ./scripts/systemd_boot
 
 echo -e "${GREEN}\nProceso finalizado.${NC}"
 echo -e "${GREEN}Ejecutando script de paquetes...${NC}"
 #./scripts/paquetes
+
