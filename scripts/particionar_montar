@@ -8,8 +8,8 @@ GREEN='\033[32m'
 YELLOW='\033[33m'
 NC='\033[0m'
 
-echo -e "\033[32m\nDiscos disponibles para trabajar:\033[0m"
-echo -e "\033[32mSelecciona uno (ej: sda):\033[0m"
+echo -e "${GREEN}\nDiscos disponibles para trabajar:${NC}"
+echo -e "${GREEN}Selecciona uno (ej: sda):${NC}"
 echo
 lsblk -d -o NAME,SIZE,TYPE | grep disk
 echo
@@ -17,11 +17,11 @@ read -p "Disco (ej. sda): " unidad
 DISCO="/dev/$unidad"
 
 if [ ! -b "$DISCO" ]; then
-    echo -e "\033[31mError: La unidad '$DISCO' no existe.\033[0m"
+    echo -e "${RED}Error: La unidad '$DISCO' no existe.${NC}"
     exit 1
 fi
 
-# --- Nuevo: Parámetros EFI ---
+# Parámetros de particionado
 EFI_SIZE=513         # MiB (512 + 1 para alineación)
 BOOT_SIZE=1024       # MiB (1GB)
 SWAP_SIZE=2048       # MiB (2GB)
@@ -35,22 +35,19 @@ if (( tamanio_mib < (EFI_SIZE + BOOT_SIZE + SWAP_SIZE + 3072) )); then
     exit 1
 fi
 
-# --- Nuevo: Crear partición EFI ---
-echo -e "\033[32m\n=== Particionado con parted ===\033[0m"
+# Crear particiones
+echo -e "${GREEN}\n=== Particionado con parted ===${NC}"
 parted "$DISCO" mklabel gpt
-parted "$DISCO" mkpart ESP fat32 1MiB ${EFI_SIZE}MiB      # EFI
+parted "$DISCO" mkpart ESP fat32 1MiB ${EFI_SIZE}MiB
 parted "$DISCO" set 1 esp on
-#parted "$DISCO" mkpart primary ext4 ${EFI_SIZE}MiB $((EFI_SIZE + BOOT_SIZE))MiB  # /boot
 parted "$DISCO" mkpart primary 513MiB 100%  # LVM
 
-# --- Nuevo: Formatear EFI como FAT32 ---
-echo -e "\033[32m\n=== Formateando partición EFI ===\033[0m"
+# Formatear EFI
+echo -e "${GREEN}\n=== Formateando partición EFI ===${NC}"
 mkfs.fat -F32 "${DISCO}1"
 
-#echo -e "\033[32m\n=== Formateando partición /boot ===\033[0m"
-#mkfs.ext4 "${DISCO}2"
-
-echo -e "\033[32m\n=== Encriptando partición LVM ===\033[0m"
+# Encriptar partición LVM
+echo -e "${GREEN}\n=== Encriptando partición LVM ===${NC}"
 cryptsetup luksFormat --type luks2 \
     --pbkdf argon2id \
     --iter-time 4000 \
@@ -58,34 +55,72 @@ cryptsetup luksFormat --type luks2 \
     --hash sha3-512 \
     "${DISCO}2"
 
-echo -e "\033[32m\n=== Configurando LVM ===\033[0m"
+echo -e "${GREEN}\n=== Configurando LVM ===${NC}"
 cryptsetup open "${DISCO}2" cryptlvm
 pvcreate /dev/mapper/cryptlvm
 vgcreate vol01 /dev/mapper/cryptlvm
 
-# Calcular espacio restante después de swap
-ESPACIO_LVM=$(($(vgdisplay vol01 --units m | awk '/Free PE/{print $5}') - SWAP_SIZE))
+# Preguntar por partición /home
+read -p "¿Deseas crear una partición /home? [S/n] " crear_home
+crear_home=${crear_home:-S}
 
-lvcreate -L "${SWAP_SIZE}M" -n swap vol01
-lvcreate -l 100%FREE -n root vol01  # Ajustado para usar todo el espacio restante
+if [[ "$crear_home" =~ [sS] ]]; then
+    total_vg_mib=$(vgs vol01 --units m -o vg_size --noheadings | sed 's/[[:alpha:]]//g' | awk '{print int($1)}')
+    home_max_mib=$((total_vg_mib - 34*1024))  # 34GB = 2GB (swap) + 32GB (root mín)
+    
+    if (( home_max_mib <= 0 )); then
+        echo -e "${RED}Error: Espacio insuficiente. Necesitas al menos 34GB para swap y root.${NC}"
+        exit 1
+    fi
+    
+    home_max_gb=$((home_max_mib / 1024))
+    default_home_gb=$((home_max_gb / 2))
+    
+    echo -e "${GREEN}Espacio disponible para /home: ${home_max_gb}GB${NC}"
+    read -p "Tamaño para /home (GB, default: ${default_home_gb}): " home_gb
+    home_gb=${home_gb:-$default_home_gb}
+    
+    if ! [[ "$home_gb" =~ ^[0-9]+$ ]] || (( home_gb > home_max_gb )); then
+        echo -e "${RED}Error: Tamaño inválido o excede el espacio disponible${NC}"
+        exit 1
+    fi
+    
+    home_mib=$((home_gb * 1024))
+    
+    # Crear volúmenes lógicos
+    lvcreate -L "${SWAP_SIZE}M" -n swap vol01
+    lvcreate -L "${home_mib}M" -n home vol01
+    lvcreate -l 100%FREE -n root vol01
+else
+    # Crear solo swap y root
+    lvcreate -L "${SWAP_SIZE}M" -n swap vol01
+    lvcreate -l 100%FREE -n root vol01
+fi
 
-echo -e "\033[32m\n=== Formateando volúmenes lógicos ===\033[0m"
+# Formatear particiones
+echo -e "${GREEN}\n=== Formateando volúmenes lógicos ===${NC}"
 mkfs.ext4 /dev/vol01/root
 mkswap /dev/vol01/swap
 
-echo -e "\033[32m\n=== Montando particiones ===\033[0m"
+if [[ "$crear_home" =~ [sS] ]]; then
+    mkfs.ext4 /dev/vol01/home
+fi
+
+# Montar particiones
+echo -e "${GREEN}\n=== Montando particiones ===${NC}"
 mount /dev/vol01/root /mnt
 mount --mkdir "${DISCO}1" /mnt/boot
 
-echo -e "\033[32m\nActivando swap...\033[0m"
+if [[ "$crear_home" =~ [sS] ]]; then
+    mount --mkdir /dev/vol01/home /mnt/home
+fi
+
 swapon /dev/vol01/swap
 
-# --- Nuevo: Obtener UUID de la partición LUKS para systemd-boot ---
+# Configurar UUID para systemd-boot
 LUKS_UUID=$(blkid -s UUID -o value "${DISCO}2")
 sed -i "s/<TU-UUID-AQUI>/${LUKS_UUID}/g" ./scripts/systemd_boot
 
-echo -e "\033[32m\nProceso finalizado.\033[0m"
-echo -e "\033[32mSigue ./paquetes\033[0m"
-
-echo -e "\033[32m==== PAQUETES ====\033[0m"
-./scripts/paquetes
+echo -e "${GREEN}\nProceso finalizado.${NC}"
+echo -e "${GREEN}Ejecutando script de paquetes...${NC}"
+#./scripts/paquetes
