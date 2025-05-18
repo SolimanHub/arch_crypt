@@ -21,6 +21,27 @@ if [ ! -b "$DISCO" ]; then
     exit 1
 fi
 
+# borrado seguro
+read -p "¿Deseas borrar el disco sobrescribiendo datos aleatorios? [S/n] " borrar_disco
+borrar_disco=${borrar_disco:-S}
+
+if [[ "$borrar_disco" =~ [sS] ]]; then
+    echo -e "${YELLOW}\n¡Advertencia! ¡Esto borrará TODOS los datos en $DISCO de forma irreversible!${NC}"
+    echo -e "${GREEN}Sobrescribiendo disco con datos aleatorios... (Esto puede tomar varias horas)${NC}"
+    echo -e "${YELLOW}Por favor espera...${NC}\n"
+    # Crear contenedor cifrado temporal
+    cryptsetup open --type plain --key-file /dev/urandom "$DISCO" to_be_wiped
+echo -e "${YELLOW}Importante: Durante el proceso verás un mensaje de 'No queda espacio en el dispositivo'. ${NC}"
+echo -e "${YELLOW}Este mensaje es completamente normal y esperado, ya que estamos llenando intencionalmente todo el espacio disponible. ${NC}"
+echo -e "${YELLOW}No es un error sino la confirmación de que se ha sobrescrito exitosamente todo el dispositivo.${NC}\n"
+echo -e "${YELLOW}Ten paciencia mientras se generan datos aleatorios y se completa el proceso...${NC}\n"
+    # Sobrescribir con ceros (aparecerán como aleatorios por el cifrado)
+    dd if=/dev/zero of=/dev/mapper/to_be_wiped status=progress bs=1M || true
+    cryptsetup close to_be_wiped || true
+
+    echo -e "\n${GREEN}¡Disco sobrescrito correctamente!${NC}\n"
+fi
+
 # Parámetros de particionado
 EFI_SIZE=513         # MiB (512 + 1 para alineación)
 BOOT_SIZE=1024       # MiB (1GB)
@@ -67,26 +88,26 @@ crear_home=${crear_home:-S}
 if [[ "$crear_home" =~ [sS] ]]; then
     total_vg_mib=$(vgs vol01 --units m -o vg_size --noheadings | sed 's/[[:alpha:]]//g' | awk '{print int($1)}')
     home_max_mib=$((total_vg_mib - 22*1024))  # 22GB = 2GB (swap) + 20GB (root mín)
-    
+
     if (( home_max_mib <= 0 )); then
         echo -e "${RED}Error: Espacio insuficiente. Necesitas al menos 22GB para swap y root.${NC}"
         exit 1
     fi
-    
+
     home_max_gb=$((home_max_mib / 1024))
     default_home_gb=$((home_max_gb / 2))
-    
+
     echo -e "${GREEN}Espacio disponible para /home: ${home_max_gb}GB${NC}"
     read -p "Tamaño para /home (GB, default: ${default_home_gb}): " home_gb
     home_gb=${home_gb:-$default_home_gb}
-    
+
     if ! [[ "$home_gb" =~ ^[0-9]+$ ]] || (( home_gb > home_max_gb )); then
         echo -e "${RED}Error: Tamaño inválido o excede el espacio disponible${NC}"
         exit 1
     fi
-    
+
     home_mib=$((home_gb * 1024))
-    
+
     # Crear volúmenes lógicos
     lvcreate -L "${SWAP_SIZE}M" -n swap vol01
     lvcreate -L "${home_mib}M" -n home vol01
@@ -118,10 +139,10 @@ fi
 swapon /dev/vol01/swap
 
 # Configurar UUID para systemd-boot
-#LUKS_UUID=$(blkid -s UUID -o value "${DISCO}2")
-#sed -i "s/<TU-UUID-AQUI>/${LUKS_UUID}/g" ./scripts/systemd_boot
+LUKS_UUID=$(blkid -s UUID -o value "${DISCO}2")
+sed -i "s/<TU-UUID-AQUI>/${LUKS_UUID}/g" ./scripts/systemd_boot
 
 echo -e "${GREEN}\nProceso finalizado.${NC}"
 echo -e "${GREEN}Ejecutando script de paquetes...${NC}"
-#./scripts/paquetes
+./scripts/paquetes
 
