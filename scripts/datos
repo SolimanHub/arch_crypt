@@ -94,6 +94,7 @@ fi
 
 # --- Selección de kernel ---
 echo "Seleccionando kernel..."
+echo -e "${YELLOW}\n¡Advertencia! ¡Actualmente el instalador solo configura automaticamente el kernel Standard, si prefiere Zen o LTS debera configurarlos manualmente en /boot/loader/entries/arch.conf!${NC}"
 echo "===== Selección de Kernel ====="
 echo "1) Linux Standard (default)"
 echo "2) Linux-Zen (mejor para escritorio)"

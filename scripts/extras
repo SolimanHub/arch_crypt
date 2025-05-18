@@ -15,11 +15,11 @@ detect_gpu_drivers() {
     local gpu_info=$(lspci | grep -i vga)
     
     if grep -qi "intel" <<< "$gpu_info"; then
-        pacman -S --noconfirm --overwrite '*' xf86-video-intel vulkan-intel intel-media-driver
+        pacman -S --needed --noconfirm --overwrite '*' xf86-video-intel vulkan-intel intel-media-driver
     elif grep -qi "amd" <<< "$gpu_info"; then
-        pacman -S --noconfirm --overwrite '*' xf86-video-amdgpu vulkan-radeon libva-mesa-driver
+        pacman -S --needed --noconfirm --overwrite '*' xf86-video-amdgpu vulkan-radeon libva-mesa-driver
     elif grep -qi "nvidia" <<< "$gpu_info"; then
-        pacman -S --noconfirm --overwrite '*' nvidia nvidia-utils nvidia-settings cuda
+        pacman -S --needed --noconfirm --overwrite '*' nvidia nvidia-utils nvidia-settings cuda
     else
         echo -e "\033[32mUsando controladores genéricos (modesetting)\033[0m"
     fi
@@ -39,7 +39,7 @@ detect_gpu_drivers
 # ===== Paquetes opcionales (solo instalación completa) =====
 if [[ "$MINIMAL_INSTALL" != "s" ]]; then
     echo -e "\033[32mInstalando paquetes adicionales...\033[0m"
-    pacman -S --noconfirm --overwrite '*' \
+    pacman -S --needed --noconfirm --overwrite '*' \
         lightdm lightdm-gtk-greeter \
         noto-fonts noto-fonts-emoji ttf-firacode-nerd \
         networkmanager network-manager-applet \
@@ -49,11 +49,11 @@ if [[ "$MINIMAL_INSTALL" != "s" ]]; then
         alsa-utils 
     
     # Thunar con plugins
-    pacman -S --noconfirm --overwrite '*' \
+    pacman -S --needed --noconfirm --overwrite '*' \
       thunar thunar-archive-plugin thunar-media-tags-plugin thunar-shares-plugin thunar-volman tumbler ffmpegthumbnailer gvfs gvfs-mtp thunar-vcs-plugin
     
     # Herramientas de desarrollo
-    pacman -S --noconfirm --overwrite '*' \
+    pacman -S --needed --noconfirm --overwrite '*' \
         docker docker-compose nodejs npm go rust \
         python python-pip base-devel
     
@@ -86,17 +86,17 @@ if [[ "$MINIMAL_INSTALL" != "s" ]]; then
     
     for choice in "${choices[@]}"; do
         case "$(tr -d '[:space:]' <<< "$choice")" in
-            1) pacman -S --noconfirm --overwrite '*' i3-gaps gnome-screenshot \
+            1) pacman -S --needed --noconfirm --overwrite '*' i3-gaps gnome-screenshot \
               brightnessctl ttf-terminus-nerd \
               ttf-roboto ttf-font-awesome rofi \
               picom feh dunst polybar ;;
-            2) pacman -S --noconfirm --overwrite '*' xfce4 xfce4-goodies ;;
-            3) pacman -S --noconfirm --overwrite '*' gnome gnome-extra ;;
-            4) pacman -S --noconfirm --overwrite '*' plasma kde-applications ;;
-            5) pacman -S --noconfirm --overwrite '*' hyprland waybar grim slurp wofi ;;
-            6) pacman -S --noconfirm --overwrite '*' gnome-shell gnome-control-center gdm ;;
-            7) pacman -S --noconfirm --overwrite '*' sway swaylock swayidle wofi ;;
-            8) pacman -S --noconfirm --overwrite '*' mate mate-extra mate-media ;;
+            2) pacman -S --needed --noconfirm --overwrite '*' xfce4 xfce4-goodies ;;
+            3) pacman -S --needed --noconfirm --overwrite '*' gnome gnome-extra ;;
+            4) pacman -S --needed --noconfirm --overwrite '*' plasma kde-applications ;;
+            5) pacman -S --needed --noconfirm --overwrite '*' hyprland waybar grim slurp wofi ;;
+            6) pacman -S --needed --noconfirm --overwrite '*' gnome-shell gnome-control-center gdm ;;
+            7) pacman -S --needed --noconfirm --overwrite '*' sway swaylock swayidle wofi ;;
+            8) pacman -S --needed --noconfirm --overwrite '*' mate mate-extra mate-media ;;
             *) echo "Opción $choice omitida" ;;
         esac
     done

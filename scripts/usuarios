@@ -16,7 +16,6 @@ echo -e "${GREEN}Estableciendo contraseña del usuario root...${NC}"
 echo "root:$root_pass" | chpasswd
 
 echo -e "${YELLOW}===== Crear usuario =====${NC}"
-#read -rp "Nombre de Usuario: " usuario
 
 echo -e "${GREEN}Creando usuario '$usuario' con grupos y shell bash...${NC}"
 useradd -m -g users -G audio,lp,optical,storage,video,wheel,games,power,scanner -s /bin/bash "$usuario"

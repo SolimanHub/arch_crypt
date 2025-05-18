@@ -57,4 +57,4 @@ mkinitcpio -P
 
 # Instalación de paquetes adicionales
 echo -e "${GREEN}==== EXTRAS ====${NC}"
-#./extras
+./extras

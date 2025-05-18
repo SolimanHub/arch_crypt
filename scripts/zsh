@@ -8,7 +8,7 @@ USER_NAME="usuarioxyz"
 
 # Configuración básica de zsh
 cd "$USER_HOME"
-pacman -S --noconfirm --overwrite '*'zsh zsh-completions
+pacman -S --needed --noconfirm --overwrite '*'zsh zsh-completions
 chsh -s "$(command -v zsh)" "$USER_NAME"
 # Ejecutar comandos como usuario normal
 sudo -u "$USER_NAME" zsh <<EOF
@@ -23,4 +23,5 @@ sed -i 's/^plugins=.*/plugins=(git zsh-autosuggestions zsh-syntax-highlighting)/
 EOF
 
 echo -e "\033[32m==== YAY_INSTALL ====\033[0m"
+#source $USER_HOME/yay_install
 ./yay_install
