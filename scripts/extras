@@ -86,7 +86,7 @@ if [[ "$MINIMAL_INSTALL" != "s" ]]; then
     
     for choice in "${choices[@]}"; do
         case "$(tr -d '[:space:]' <<< "$choice")" in
-            1) pacman -S --needed --noconfirm --overwrite '*' i3-gaps gnome-screenshot \
+            1) pacman -S --needed --noconfirm --overwrite '*' i3-gaps xprintidle gnome-screenshot \
               brightnessctl ttf-terminus-nerd \
               ttf-roboto ttf-font-awesome rofi \
               picom feh dunst polybar ;;
