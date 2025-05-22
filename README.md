@@ -1,97 +1,148 @@
-# ArchLinux Auto-Installer 🚀
+Arch Linux Auto-Installer 🔐🚀
 
-Script de automatización para instalación de Arch Linux con configuración personalizada.  
-*Simplifica el proceso de instalación y configuración en unos pocos pasos.*
+Instalador automatizado de Arch Linux con cifrado LUKS2, LVM y systemd-boot
+Características principales:
+✅ Cifrado completo del sistema con LUKS2
+✅ Gestión de volúmenes LVM
+✅ Boot UEFI con systemd-boot
+✅ Soporte para múltiples kernels y microcódigos
+✅ Configuración automática de drivers gráficos
 
----
+Instalación Segura
+Entornos
+🌟 Novedades en esta versión
 
-## 📋 Requisitos Previos
-- **Medio de instalación**: USB con [Arch Linux ISO](https://archlinux.org/download/).
-- **Conexión a Internet**: Requerida durante la instalación.
-- **Conocimientos básicos**: Particiones, BIOS/UEFI, y terminal.
+    Reemplazo de GRUB por systemd-boot para sistemas UEFI modernos
 
----
+    Cifrado LUKS2 con parámetros seguros (Argon2id, SHA3-512)
 
-## 🛠️ Instrucciones de Uso
+    Borrado seguro del disco con datos aleatorios
 
-### 1. Preparar el Entorno Live
-1. Arranque desde el USB de Arch Linux.
-2. Ejecute los siguientes comandos:
+    Soporte para discos NVMe y TRIM (opcional)
+
+    Menú interactivo para selección de entornos gráficos
+
+🛠️ Requisitos del Sistema
+
+    UEFI (no soporta BIOS legacy)
+
+    Conexión a Internet (recomendado cable Ethernet)
+
+    Mínimo 10 GB de espacio en disco
+
+    USB booteable con Arch Linux
+
+📥 Preparación del Entorno Live
 
 ```bash
-pacman -Syy                # Actualizar repositorios
-pacman -S git              # Instalar Git (repetir si falla)
-```
-> Es posible que deba repetir este paso mas de una vez si falla la instalación de git.
-
-### 2. Clonar el Repositorio
-```bash
-git clone https://github.com/SolimanHub/arch
+pacman -Sy git
+git clone https://github.com/SolimanHub/arch_crypt
 cd arch
+chmod +x start scripts/*
 ```
+🖥️ Flujo de Instalación
+1. Ejecutar instalador principal
 
-### 3. Iniciar la Instalación
 ```bash
 ./start
 ```
+2. Proceso Automatizado
 
----
+    Configuración inicial
 
-## 🧩 Flujo de los Scripts
-El proceso se ejecuta en cascada:
+        Selección de disco y borrado seguro
 
-1. **`datos`**  
-   - Solicita: nombre de host, contraseñas, entorno gráfico y kernel.
-2. **`discos_gdisk`**  
-   - Crea particiones: `/`, `/home`, Swap (2 GB), EFI (550 MB).
-3. **`paquetes`**  
-   - Instala paquetes base y kernels.
-4. **`pre-conf`**  
-   - Copia archivos de configuración al sistema nuevo.
-5. **`conf`**  
-   - Configura zona horaria, locales y hostname.
-6. **`usuarios`**  
-   - Crea usuarios.
-7. **`grub`**  
-   - Instala GRUB.
-8. **`extras`**  
-   - Gestiona configuraciones críticas post-instalación, optimizando el sistema según tu hardware y preferencias..
-9. **`refresh`**  
-   - Retorna valores pre-instalacion de los scripts.
-10. **`zsh`**  
-   - Instala ZSH + plugins.
-11. **`yay_install`**  
-   - Configura AUR y paquetes.
-12. **`limpiar`**  
-   - Elimina los scripts de la instalacion.
+        Creación de particiones cifradas
 
----
+        Configuración de LVM (swap, root, home opcional)
 
-## 🌟 Características Clave
-- **Particionado automático**: `/`, `/home`, Swap, EFI.
-- **8 entornos gráficos**: i3wm (default), GNOME, KDE, etc.
-- **Drivers automáticos**: NVIDIA, AMD, Intel.
-- **Post-instalación**: ZSH, YAY (AUR), temas personalizados.
+    Configuración del Sistema
 
----
+        Elección de kernels (Standard, Zen, LTS)
 
-## ⚠️ Notas
-- **Para VMs**: Usar particionado automático (opción `n`).
-- **Errores comunes**:
-  - Si `git clone` falla: ejecutar `pacman -Syy` nuevamente.
-  - Verificar conexión a internet.
+        Selección de entorno gráfico (i3, GNOME, KDE, etc)
 
----
+        Detección automática de microcódigo (Intel/AMD)
 
-## 🛠️ Scripts Adicionales (En Desarrollo)
-| Script          | Función                             |
-|-----------------|-------------------------------------|
-| `gits`          | Clona configuraciones personalizadas|
+        Configuración de zona horaria e idioma
 
----
+    Post-Instalación
 
-## 📞 Soporte
-- **Telegram**: [@Softliman](https://t.me/Softliman)
-- **GitHub Issues**: [Reportar errores](https://github.com/SolimanHub/arch/issues)
----
+        Instalación de drivers gráficos (NVIDIA/AMD/Intel)
 
+        Configuración de usuarios y permisos
+
+        Instalación básica de ZSH + Oh My ZSH
+
+        Habilitación de servicios esenciales
+
+🔧 Estructura de Scripts Principales
+Script	Función
+particionar_montar	Cifrado LUKS2, creación de LVM y montaje de particiones
+systemd_boot	Instalación y configuración del bootloader UEFI
+datos	Interfaz interactiva para configuración del sistema
+extras	Instalación de drivers y entornos gráficos
+usuarios	Creación de usuarios y configuración de permisos
+zsh	Instalación personalizada de ZSH con plugins
+🛡️ Configuración de Seguridad
+
+```bash
+Parámetros de cifrado LUKS2
+
+cryptsetup luksFormat --type luks2
+--pbkdf argon2id
+--iter-time 4000
+--key-size 512
+--hash sha3-512
+```
+
+Características incluidas:
+
+    Cifrado AES-XTS de 512 bits
+
+    Derivación de claves con Argon2id
+
+    Protección contra ataques de fuerza bruta
+
+    Soporte para TRIM en SSDs (opcional)
+
+🚦 Troubleshooting
+Error al detectar disco
+
+```bash
+Verificar nombre del disco
+
+lsblk -d -o NAME,SIZE,TYPE
+```
+Recuperar acceso al sistema cifrado
+
+```bash
+cryptsetup open /dev/nvme0n1p2 cryptlvm
+mount /dev/vol01/root /mnt
+```
+Regenerar initramfs
+
+```bash
+mkinitcpio -P
+```
+📌 Notas Importantes
+
+    SSD Optimization: Agregar :allow-discards al parámetro cryptdevice si necesitas TRIM
+
+    Kernels Alternativos: Los kernels Zen/LTS requieren configuración manual en entries
+
+    Soporte NVIDIA: Se instala automáticamente si se detecta hardware NVIDIA
+
+📚 Recursos Adicionales
+
+    [Guía LUKS2](https://wiki.archlinux.org/title/Dm-crypt/Device_encryption)
+
+    [systemd-boot](https://wiki.archlinux.org/title/Systemd-boot)
+
+    [LVM Best Practices](https://wiki.archlinux.org/title/LVM)
+
+📞 Soporte
+
+¿Problemas con la instalación?
+Contacto Telegram: @Softliman
+Issues: GitHub Issues
