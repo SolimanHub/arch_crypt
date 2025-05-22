@@ -40,7 +40,7 @@ detect_gpu_drivers
 if [[ "$MINIMAL_INSTALL" != "s" ]]; then
     echo -e "\033[32mInstalando paquetes adicionales...\033[0m"
     pacman -S --needed --noconfirm --overwrite '*' \
-        lightdm lightdm-gtk-greeter \
+        lightdm vlc lightdm-gtk-greeter \
         noto-fonts noto-fonts-emoji ttf-firacode-nerd \
         networkmanager network-manager-applet \
         pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber \
